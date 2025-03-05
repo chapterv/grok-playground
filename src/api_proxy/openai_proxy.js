@@ -1,5 +1,3 @@
-import { Logger } from '../static/js/utils/logger.js';
-
 /**
  * 将 Grok API 的响应转换为 OpenAI 格式
  * @param {Object} grokResponse - Grok API 的原始响应

@@ -10,7 +10,6 @@ import { handleGrokRequest } from '../handle_grok.js';
 export async function handleChatCompletions(request, apiKey) {
     try {
         // 验证API密钥（如果需要）
-        // 这里可以添加验证逻辑，例如检查环境变量中的API密钥
         const validApiKey = Deno.env.get("GROK_API_KEY") || "";
         if (validApiKey && apiKey !== validApiKey) {
             return new Response(JSON.stringify({
@@ -34,26 +33,36 @@ export async function handleChatCompletions(request, apiKey) {
         const grokRequest = convertOpenAIToGrok(requestData);
         
         // 创建一个模拟的请求对象，用于复用现有的handleGrokRequest函数
-        const mockRequest = new Request('http://localhost/api/chat', {
+        // 修改URL路径，确保使用正确的端点
+        const mockRequest = new Request('http://localhost/api/conversation', {
             method: 'POST',
             headers: new Headers({
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                // 添加更多模拟浏览器的头信息
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept': 'application/json, text/plain, */*',
+                'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+                'Origin': 'https://grok.x.com',
+                'Referer': 'https://grok.x.com/'
             }),
             body: JSON.stringify(grokRequest)
         });
         
+        console.log("发送请求到handleGrokRequest...");
+        
         // 使用现有的handleGrokRequest函数处理请求
-        // 这样可以复用现有的网页模拟逻辑，保留原有功能
         const grokResponse = await handleGrokRequest(mockRequest);
         
         // 检查响应状态
         if (grokResponse.status !== 200) {
             const errorText = await grokResponse.text();
-            throw new Error(`处理Grok请求失败: ${grokResponse.status}, ${errorText}`);
+            console.error(`Grok响应错误: ${grokResponse.status}`, errorText);
+            throw new Error(`处理Grok请求失败: ${grokResponse.status}, ${errorText.substring(0, 100)}...`);
         }
         
         // 解析Grok响应
         const grokData = await grokResponse.json();
+        console.log("成功获取Grok响应");
         
         // 将Grok响应转换为OpenAI格式
         const openaiResponse = convertGrokToOpenAI(grokData);

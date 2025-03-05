@@ -82,3 +82,14 @@ Mac/Linux 安装Deno:
 3. cd 项目根目录
 4. netlify login
 5. netlify dev
+
+## API 使用方法
+
+Grok Playground 现在支持 OpenAI 兼容的 API 格式，可以通过以下方式使用：
+
+### 获取可用模型：
+
+```bash
+curl --location 'http://your.domain.com/v1/models' \
+--header 'Authorization: Bearer YOUR-GROK-API-KEY'
+```

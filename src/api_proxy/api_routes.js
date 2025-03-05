@@ -33,8 +33,8 @@ export async function handleChatCompletions(request, apiKey) {
         const grokRequest = convertOpenAIToGrok(requestData);
         
         // 创建一个模拟的请求对象，用于复用现有的handleGrokRequest函数
-        // 修改URL路径，确保使用正确的端点
-        const mockRequest = new Request('http://localhost/api/conversation', {
+        // 尝试不同的API端点
+        const mockRequest = new Request('http://localhost/grok/conversation', {
             method: 'POST',
             headers: new Headers({
                 'Content-Type': 'application/json',
@@ -48,7 +48,7 @@ export async function handleChatCompletions(request, apiKey) {
             body: JSON.stringify(grokRequest)
         });
         
-        console.log("发送请求到handleGrokRequest...");
+        console.log("发送请求到handleGrokRequest，使用端点: /grok/conversation");
         
         // 使用现有的handleGrokRequest函数处理请求
         const grokResponse = await handleGrokRequest(mockRequest);
@@ -56,8 +56,35 @@ export async function handleChatCompletions(request, apiKey) {
         // 检查响应状态
         if (grokResponse.status !== 200) {
             const errorText = await grokResponse.text();
-            console.error(`Grok响应错误: ${grokResponse.status}`, errorText);
-            throw new Error(`处理Grok请求失败: ${grokResponse.status}, ${errorText.substring(0, 100)}...`);
+            console.error(`Grok响应错误: ${grokResponse.status}`, errorText.substring(0, 200));
+            
+            // 如果是404错误，尝试另一个端点
+            if (grokResponse.status === 404) {
+                console.log("尝试备用端点: /v1/chat/completions");
+                const altMockRequest = new Request('http://localhost/v1/chat/completions', {
+                    method: 'POST',
+                    headers: new Headers({
+                        'Content-Type': 'application/json',
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                    }),
+                    body: JSON.stringify(grokRequest)
+                });
+                
+                const altResponse = await handleGrokRequest(altMockRequest);
+                
+                if (altResponse.status === 200) {
+                    const altData = await altResponse.json();
+                    console.log("成功获取Grok响应（备用端点）");
+                    const openaiResponse = convertGrokToOpenAI(altData);
+                    return new Response(JSON.stringify(openaiResponse), {
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                }
+            }
+            
+            throw new Error(`处理Grok请求失败: ${grokResponse.status}`);
         }
         
         // 解析Grok响应

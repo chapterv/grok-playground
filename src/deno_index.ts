@@ -16,20 +16,20 @@ async function handler(request: Request): Promise<Response> {
     const url = new URL(request.url);
     const path = url.pathname;
     
-    // API 路由处理
+    // API route handling
     if (path === "/v1/chat/completions") {
-        // 提取 API 密钥
+        // Extract API key
         const authHeader = request.headers.get("Authorization") || "";
         const apiKey = authHeader.startsWith("Bearer ") 
             ? authHeader.substring(7) 
             : Deno.env.get("GROK_API_KEY") || "";
             
-        return await handleChatCompletions(request, apiKey);
+        return await apiHandleChatCompletions(request, apiKey);
     } else if (path === "/v1/models") {
         return handleModels();
     }
     
-    // 原有的 Grok 处理逻辑
+    // Original Grok handling logic
     return await handleGrok(request);
 }
 

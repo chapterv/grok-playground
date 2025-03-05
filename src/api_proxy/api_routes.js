@@ -1,4 +1,5 @@
 import { convertGrokToOpenAI, convertOpenAIToGrok } from './openai_proxy.js';
+import { handleGrokRequest } from '../handle_grok.js';
 
 /**
  * 处理聊天补全请求
@@ -9,21 +10,14 @@ import { convertGrokToOpenAI, convertOpenAIToGrok } from './openai_proxy.js';
 export async function handleChatCompletions(request, apiKey) {
     try {
         // 验证API密钥（如果需要）
-        // 直接使用传入的apiKey作为cookie
-        const cookies = apiKey;
-        
-        // 解析请求体
-        const requestData = await request.json();
-        
-        // 将OpenAI格式转换为Grok格式
-        const grokRequest = convertOpenAIToGrok(requestData);
-        
-        if (!cookies) {
+        // 这里可以添加验证逻辑，例如检查环境变量中的API密钥
+        const validApiKey = Deno.env.get("GROK_API_KEY") || "";
+        if (validApiKey && apiKey !== validApiKey) {
             return new Response(JSON.stringify({
                 error: {
-                    message: '未找到有效的Grok账户，请先在Web界面添加账户',
+                    message: 'API密钥无效',
                     type: 'authentication_error',
-                    code: 'no_account'
+                    code: 'invalid_api_key'
                 }
             }), {
                 status: 401,
@@ -33,22 +27,32 @@ export async function handleChatCompletions(request, apiKey) {
             });
         }
         
-        console.log("使用cookie访问Grok API");
+        // 解析请求体
+        const requestData = await request.json();
         
-        // 使用cookies访问Grok API
-        const grokResponse = await fetch('https://grok.x.com/api/chat', {
+        // 将OpenAI格式转换为Grok格式
+        const grokRequest = convertOpenAIToGrok(requestData);
+        
+        // 创建一个模拟的请求对象，用于复用现有的handleGrokRequest函数
+        const mockRequest = new Request('http://localhost/api/chat', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Cookie': cookies
-            },
+            headers: new Headers({
+                'Content-Type': 'application/json'
+            }),
             body: JSON.stringify(grokRequest)
         });
         
-        if (!grokResponse.ok) {
-            throw new Error(`Grok API responded with status: ${grokResponse.status}`);
+        // 使用现有的handleGrokRequest函数处理请求
+        // 这样可以复用现有的网页模拟逻辑，保留原有功能
+        const grokResponse = await handleGrokRequest(mockRequest);
+        
+        // 检查响应状态
+        if (grokResponse.status !== 200) {
+            const errorText = await grokResponse.text();
+            throw new Error(`处理Grok请求失败: ${grokResponse.status}, ${errorText}`);
         }
         
+        // 解析Grok响应
         const grokData = await grokResponse.json();
         
         // 将Grok响应转换为OpenAI格式
@@ -61,7 +65,7 @@ export async function handleChatCompletions(request, apiKey) {
             }
         });
     } catch (error) {
-        console.error('Error handling chat completions:', error);
+        console.error('处理聊天补全请求时出错:', error);
         return new Response(JSON.stringify({
             error: {
                 message: '处理请求时出错: ' + error.message,
@@ -76,8 +80,6 @@ export async function handleChatCompletions(request, apiKey) {
         });
     }
 }
-
-// 删除不需要的getCookiesFromStorage函数
 
 /**
  * 处理模型列表请求

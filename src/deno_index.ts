@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.140.0/http/server.ts";
 import { handleChatCompletions, handleModels } from "./api_proxy/api_routes.js";
-import { handleGrok } from "./handle_grok.js";
+// Fix the import to match what's actually exported from handle_grok.js
+import { handleGrokRequest } from "./handle_grok.js";
 
 // 从环境变量获取 API 密钥，或者使用默认值
 const GROK_API_KEY = Deno.env.get("GROK_API_KEY") || "";
@@ -22,8 +23,8 @@ async function handler(request: Request): Promise<Response> {
         return handleModels();
     }
     
-    // 原有的 Grok 处理逻辑
-    return await handleGrok(request);
+    // 原有的 Grok 处理逻辑 - use handleGrokRequest instead of handleGrok
+    return await handleGrokRequest(request);
 }
 
 serve(handler);

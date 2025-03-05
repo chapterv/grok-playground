@@ -1,5 +1,4 @@
 import { convertGrokToOpenAI, convertOpenAIToGrok } from './openai_proxy.js';
-import { Logger } from '../static/js/utils/logger.js';
 
 /**
  * 处理 OpenAI 兼容的聊天完成请求
@@ -14,6 +13,8 @@ async function handleChatCompletions(request, apiKey) {
         
         // 转换为 Grok 格式
         const grokRequest = convertOpenAIToGrok(requestData);
+        
+        console.log('Sending request to Grok API', grokRequest);
         
         // 调用 Grok API
         const grokResponse = await fetch('https://api.grok.ai/v1/chat/completions', {
@@ -32,6 +33,7 @@ async function handleChatCompletions(request, apiKey) {
         
         // 解析 Grok 响应
         const grokData = await grokResponse.json();
+        console.log('Received response from Grok API', grokData);
         
         // 转换为 OpenAI 格式
         const openaiResponse = convertGrokToOpenAI(grokData);
@@ -41,7 +43,7 @@ async function handleChatCompletions(request, apiKey) {
             headers: { 'Content-Type': 'application/json' }
         });
     } catch (error) {
-        Logger.error('Chat completions error', error);
+        console.error('Chat completions error', error);
         return new Response(JSON.stringify({
             error: {
                 message: error.message,

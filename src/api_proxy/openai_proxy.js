@@ -8,7 +8,6 @@ import { Logger } from '../static/js/utils/logger.js';
 function convertGrokToOpenAI(grokResponse) {
     try {
         // 根据 Grok 的实际响应结构进行转换
-        // 这里是一个示例，需要根据 Grok API 的实际响应格式调整
         return {
             id: `grok-${Date.now()}`,
             object: "chat.completion",
@@ -31,7 +30,7 @@ function convertGrokToOpenAI(grokResponse) {
             }
         };
     } catch (error) {
-        Logger.error('Error converting Grok response to OpenAI format', error);
+        console.error('Error converting Grok response to OpenAI format', error);
         throw error;
     }
 }
@@ -47,16 +46,14 @@ function convertOpenAIToGrok(openaiRequest) {
         const messages = openaiRequest.messages || [];
         
         // 构建 Grok 请求格式
-        // 这里是一个示例，需要根据 Grok API 的实际请求格式调整
         return {
             messages: messages,
             model: openaiRequest.model || "grok-3",
             temperature: openaiRequest.temperature,
             max_tokens: openaiRequest.max_tokens,
-            // 其他 Grok 特定参数
         };
     } catch (error) {
-        Logger.error('Error converting OpenAI request to Grok format', error);
+        console.error('Error converting OpenAI request to Grok format', error);
         throw error;
     }
 }

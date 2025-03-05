@@ -9,17 +9,14 @@ import { convertGrokToOpenAI, convertOpenAIToGrok } from './openai_proxy.js';
 export async function handleChatCompletions(request, apiKey) {
     try {
         // 验证API密钥（如果需要）
-        // 这里可以添加验证逻辑
+        // 直接使用传入的apiKey作为cookie
+        const cookies = apiKey;
         
         // 解析请求体
         const requestData = await request.json();
         
         // 将OpenAI格式转换为Grok格式
         const grokRequest = convertOpenAIToGrok(requestData);
-        
-        // 从存储中获取当前选中账户的cookies
-        // 这里需要实现获取cookies的逻辑
-        const cookies = await getCookiesFromStorage();
         
         if (!cookies) {
             return new Response(JSON.stringify({
@@ -35,6 +32,8 @@ export async function handleChatCompletions(request, apiKey) {
                 }
             });
         }
+        
+        console.log("使用cookie访问Grok API");
         
         // 使用cookies访问Grok API
         const grokResponse = await fetch('https://grok.x.com/api/chat', {
@@ -78,26 +77,7 @@ export async function handleChatCompletions(request, apiKey) {
     }
 }
 
-// 从存储中获取cookies的辅助函数
-async function getCookiesFromStorage() {
-    // 这里需要实现从存储中获取当前选中账户的cookies
-    // 可能需要读取文件或数据库
-    
-    // 示例实现（需要根据实际存储方式修改）
-    try {
-        const accountsData = await Deno.readTextFile('./src/static/js/accounts.json');
-        const accounts = JSON.parse(accountsData);
-        const selectedAccount = accounts.find(acc => acc.selected);
-        
-        if (selectedAccount) {
-            return selectedAccount.cookies;
-        }
-        return null;
-    } catch (error) {
-        console.error('Error reading accounts data:', error);
-        return null;
-    }
-}
+// 删除不需要的getCookiesFromStorage函数
 
 /**
  * 处理模型列表请求
